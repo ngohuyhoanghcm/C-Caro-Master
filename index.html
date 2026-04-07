@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <script>
+      // Nuclear fix for "Cannot set property fetch of #<Window> which has only a getter"
+      (function() {
+        const originalFetch = window.fetch;
+        let customFetch = null;
+
+        try {
+          // Attempt to redefine 'fetch' on the window object itself
+          Object.defineProperty(window, 'fetch', {
+            get: function() {
+              return customFetch || originalFetch;
+            },
+            set: function(value) {
+              console.warn('A script attempted to overwrite window.fetch. Intercepted to prevent crash.');
+              customFetch = value;
+            },
+            configurable: true,
+            enumerable: true
+          });
+        } catch (e) {
+          console.warn('Direct property definition on window failed, trying prototype...', e);
+          try {
+            // Fallback: Attempt to redefine on the Window prototype
+            const winProto = Object.getPrototypeOf(window);
+            if (winProto && winProto.hasOwnProperty('fetch')) {
+              Object.defineProperty(winProto, 'fetch', {
+                get: function() {
+                  return customFetch || originalFetch;
+                },
+                set: function(value) {
+                  customFetch = value;
+                },
+                configurable: true
+              });
+            }
+          } catch (e2) {
+            console.error('All attempts to fix window.fetch failed. This environment may be extremely restricted.', e2);
+          }
+        }
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cờ Caro Master</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
